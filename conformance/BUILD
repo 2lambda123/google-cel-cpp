@@ -13,6 +13,7 @@
 # limitations under the License.
 
 load("//conformance:run.bzl", "gen_conformance_tests")
+load("//third_party/bazel_rules/rules_cc/cc:cc_library.bzl", "cc_library")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -119,6 +120,7 @@ cc_library(
     srcs = ["run.cc"],
     deps = [
         ":service",
+        ":utils",
         "//internal:testing_no_main",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/log:absl_check",
@@ -136,6 +138,20 @@ cc_library(
         "@com_google_protobuf//:protobuf",
     ],
     alwayslink = True,
+)
+
+cc_library(
+    name = "utils",
+    testonly = True,
+    hdrs = ["utils.h"],
+    deps = [
+        "//internal:testing",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_cel_spec//proto/cel/expr:checked_cc_proto",
+        "@com_google_cel_spec//proto/cel/expr:value_cc_proto",
+        "@com_google_googleapis//google/api/expr/v1alpha1:checked_cc_proto",
+        "@com_google_protobuf//:protobuf",
+    ],
 )
 
 _ALL_TESTS = [
