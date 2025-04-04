@@ -1916,6 +1916,28 @@ TEST(FlatExprBuilderTest, FastEquality) {
   EXPECT_FALSE(result.BoolOrDie());
 }
 
+TEST(FlatExprBuilderTest, FastEqualityFiltersBadCalls) {
+  TestMessage message;
+  ASSERT_OK_AND_ASSIGN(ParsedExpr parsed_expr, parser::Parse("'foo' == 'bar'"));
+  parsed_expr.mutable_expr()
+      ->mutable_call_expr()
+      ->mutable_target()
+      ->mutable_const_expr()
+      ->set_string_value("foo");
+  cel::RuntimeOptions options;
+  options.enable_fast_builtins = true;
+  InterpreterOptions legacy_options;
+  legacy_options.enable_fast_builtins = true;
+  CelExpressionBuilderFlatImpl builder(NewTestingRuntimeEnv(), options);
+  ASSERT_THAT(RegisterBuiltinFunctions(builder.GetRegistry(), legacy_options),
+              IsOk());
+  ASSERT_THAT(
+      builder.CreateExpression(&parsed_expr.expr(), &parsed_expr.source_info()),
+      StatusIs(absl::StatusCode::kInvalidArgument,
+               HasSubstr(
+                   "unexpected number of args for builtin equality operator")));
+}
+
 TEST(FlatExprBuilderTest, FastEqualityDisabledWithCustomEquality) {
   TestMessage message;
   ASSERT_OK_AND_ASSIGN(ParsedExpr parsed_expr, parser::Parse("1 == b'\001'"));
